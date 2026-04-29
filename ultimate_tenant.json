@@ -1,0 +1,14 @@
+{
+  "routes": {
+    "/api/data": {
+      "algorithm": "token_bucket",
+      "limit": 100,
+      "window_seconds": 10
+    },
+    "/api/secure": {
+      "algorithm": "sliding_window",
+      "limit": 50,
+      "window_seconds": 10
+    }
+  }
+}

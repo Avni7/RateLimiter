@@ -1,0 +1,9 @@
+{
+  "routes": {
+    "/api/hello": {
+      "algorithm": "fixed_window",
+      "limit": 4,
+      "window_seconds": 60
+    }
+  }
+}
