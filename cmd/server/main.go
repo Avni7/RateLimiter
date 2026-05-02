@@ -46,6 +46,8 @@ func main() {
 	
 	http.HandleFunc("/admin/config", api.UpdateConfigHandler(ctx, engine))
 
+	http.HandleFunc("/admin/config/ai", api.HandleAIConfig(ctx, engine))
+
 	fmt.Printf("Modular Server running on port %s...\n", *port)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }
