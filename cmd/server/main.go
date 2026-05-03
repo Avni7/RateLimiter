@@ -48,6 +48,11 @@ func main() {
 
 	http.HandleFunc("/admin/config/ai", api.HandleAIConfig(ctx, engine))
 
+	http.HandleFunc("/api/checkout", api.LimitMiddleware(ctx, engine, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Checkout Successful!\n"))
+	}))
+
 	fmt.Printf("Modular Server running on port %s...\n", *port)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }

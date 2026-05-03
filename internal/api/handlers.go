@@ -98,11 +98,16 @@ func HandleAIConfig(ctx context.Context, engine *limiter.Engine) http.HandlerFun
 
 		aiOutput := string(resp.Candidates[0].Content.Parts[0].(genai.Text))
 		aiOutput = strings.TrimSpace(aiOutput)
+		aiOutput = strings.TrimPrefix(aiOutput, "```json")
+		aiOutput = strings.TrimPrefix(aiOutput, "```")
+		aiOutput = strings.TrimSuffix(aiOutput, "```")
+		aiOutput = strings.TrimSpace(aiOutput)
 
 		// --- FIX STARTS HERE ---
 		// Use the Config struct from your limiter package
 		var config limiter.Config
 		if err := json.Unmarshal([]byte(aiOutput), &config); err != nil {
+			log.Printf("CLEANED AI OUTPUT: %s", aiOutput)
 			log.Printf("GEMINI API ERROR: %v", err)
 			http.Error(w, "Invalid AI JSON", http.StatusInternalServerError)
 			return
