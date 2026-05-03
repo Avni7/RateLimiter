@@ -12,6 +12,7 @@ import (
 	"ratelimiter/internal/api"
 	"ratelimiter/internal/limiter"
 	"ratelimiter/internal/storage"
+	"ratelimiter/internal/analytics"
 )
 
 func main() {
@@ -52,6 +53,9 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Checkout Successful!\n"))
 	}))
+
+	// Start the analytics worker in a background thread
+	go analytics.StartAnalyticsWorker()
 
 	fmt.Printf("Modular Server running on port %s...\n", *port)
 	log.Fatal(http.ListenAndServe(":"+*port, nil))

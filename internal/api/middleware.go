@@ -9,6 +9,7 @@ import (
 	"log"
 	"github.com/redis/go-redis/v9"
 	"ratelimiter/internal/limiter"
+	"ratelimiter/internal/analytics"
 )
 
 // tokenBucketScript atomically calculates token refills and deductions inside Redis
@@ -83,7 +84,7 @@ var slidingWindowLogScript = redis.NewScript(`
 		-- 3b. RATE LIMITED: Do not add the timestamp
 		return 0
 	end
-`)
+`)	
 
 // LimitMiddleware intercepts traffic and enforces the rules
 func LimitMiddleware(ctx context.Context, engine *limiter.Engine, next http.HandlerFunc) http.HandlerFunc {
@@ -153,6 +154,24 @@ func LimitMiddleware(ctx context.Context, engine *limiter.Engine, next http.Hand
 				engine.RedisClient.Expire(ctx, key, time.Duration(rule.WindowSeconds)*time.Second)
 			}
 			allowed = count <= rule.Limit
+		}
+		// Determine the status code based on your sliding window math
+		statusCode := http.StatusOK
+		if !allowed { // Assuming 'allowed' is the boolean from your rate limit check
+			statusCode = http.StatusTooManyRequests
+		}
+
+		// FIRE AND FORGET: Send to the channel without blocking the API!
+		select {
+		case analytics.LogQueue <- analytics.RequestLog{
+			TenantID:  tenantID,
+			Route:     r.URL.Path,
+			Status:    statusCode,
+			Timestamp: time.Now(),
+		}:
+		default:
+			// If our 10,000 capacity queue is somehow full, drop the log so the API doesn't crash
+			log.Println("Analytics buffer full! Dropping log.")
 		}
 
 		if !allowed {
