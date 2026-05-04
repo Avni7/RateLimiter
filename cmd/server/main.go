@@ -57,6 +57,18 @@ func main() {
 	// Start the analytics worker in a background thread
 	go analytics.StartAnalyticsWorker()
 
+	corsMiddleware := func(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // Allow Next.js
+        w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+        w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Tenant-ID")
+        if r.Method == "OPTIONS" {
+            return
+        }
+        next.ServeHTTP(w, r)
+    })
+}
+
 	fmt.Printf("Modular Server running on port %s...\n", *port)
-	log.Fatal(http.ListenAndServe(":"+*port, nil))
+	log.Fatal(http.ListenAndServe(":"+*port, corsMiddleware(http.DefaultServeMux)))
 }

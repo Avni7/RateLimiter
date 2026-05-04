@@ -80,7 +80,13 @@ func HandleAIConfig(ctx context.Context, engine *limiter.Engine) http.HandlerFun
 		}
 
 		apiKey := os.Getenv("GEMINI_API_KEY")
-		client, _ := genai.NewClient(ctx, option.WithAPIKey(apiKey))
+		client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
+		if err != nil {
+			log.Printf("Failed to create AI client: %v", err)
+			http.Error(w, "AI configuration error on server", http.StatusInternalServerError)
+			return
+		}
+
 		defer client.Close()
 
 		model := client.GenerativeModel("gemini-2.5-flash") // Current fast model
